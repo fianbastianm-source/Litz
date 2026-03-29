@@ -1,24 +1,49 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import logo from "./assets/lit.jpeg";
-import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
-
-// ── Firebase config — replace with your own from Firebase console ──
-const firebaseConfig = {
-  apiKey: "AIzaSyDsTI-PTsoWfgxmwvRCwCYfD9B4ye51GpQ",
-  authDomain: "litz-41c00.firebaseapp.com",
-  projectId: "litz-41c00",
-  storageBucket: "litz-41c00.firebasestorage.app",
-  messagingSenderId: "1046829843839",
-  appId: "1:1046829843839:web:7b11419ca36c039c7b064a",
-  measurementId: "G-4C5P8YYEQ5"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import {db} from "./firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const initialEvents = [];
+
+function useFirestoreData(docId, defaultValue) {
+  const [data, setData] = useState(defaultValue);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const ref = doc(db, "appData", docId);
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          setData(snap.data().value);
+        } else {
+          await setDoc(ref, { value: defaultValue });
+          setData(defaultValue);
+        }
+      } catch (error) {
+        console.error("Error loading Firestore data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [docId]);
+
+  const save = async (newValue) => {
+    try {
+      setData(newValue);
+      const ref = doc(db, "appData", docId);
+      await setDoc(ref, { value: newValue });
+    } catch (error) {
+      console.error("Error saving Firestore data:", error);
+    }
+  };
+
+  return [data, save, loading];
+}
 
 function formatDate(dateString) {
   const d = new Date(dateString + "T00:00:00");
@@ -28,32 +53,6 @@ function formatDate(dateString) {
 function formatDateShort(dateString) {
   const d = new Date(dateString + "T00:00:00");
   return d.toLocaleDateString("en-AU", { day: "numeric", month: "long" });
-}
-
-// ── Shared hook for Firestore data ──────────────────────
-function useFirestoreData(key, defaultValue) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const ref = doc(db, "kclit", key);
-    const unsub = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
-        setData(snap.data().value);
-      } else {
-        setData(defaultValue);
-      }
-      setLoading(false);
-    });
-    return () => unsub();
-  }, [key]);
-
-  const save = async (newValue) => {
-    setData(newValue);
-    await setDoc(doc(db, "kclit", key), { value: newValue });
-  };
-
-  return [data, save, loading];
 }
 
 // ── Pages ───────────────────────────────────────────────

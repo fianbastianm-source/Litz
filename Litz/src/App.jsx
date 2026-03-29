@@ -1,23 +1,28 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import logo from "./assets/lit.jpeg";
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 
-const initialEvents = [
-  {
-    id: 1,
-    date: "2026-04-03",
-    food: [],
-    sharingPerson: "Not Selected Yet",
-  },
-];
+// ── Firebase config — replace with your own from Firebase console ──
+const firebaseConfig = {
+  apiKey: "AIzaSyDsTI-PTsoWfgxmwvRCwCYfD9B4ye51GpQ",
+  authDomain: "litz-41c00.firebaseapp.com",
+  projectId: "litz-41c00",
+  storageBucket: "litz-41c00.firebasestorage.app",
+  messagingSenderId: "1046829843839",
+  appId: "1:1046829843839:web:7b11419ca36c039c7b064a",
+  measurementId: "G-4C5P8YYEQ5"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const initialEvents = [];
 
 function formatDate(dateString) {
   const d = new Date(dateString + "T00:00:00");
-  return d.toLocaleDateString("en-AU", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+  return d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
 }
 
 function formatDateShort(dateString) {
@@ -25,11 +30,39 @@ function formatDateShort(dateString) {
   return d.toLocaleDateString("en-AU", { day: "numeric", month: "long" });
 }
 
-// ── Pages ──────────────────────────────────────────────
+// ── Shared hook for Firestore data ──────────────────────
+function useFirestoreData(key, defaultValue) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const ref = doc(db, "kclit", key);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        setData(snap.data().value);
+      } else {
+        setData(defaultValue);
+      }
+      setLoading(false);
+    });
+    return () => unsub();
+  }, [key]);
+
+  const save = async (newValue) => {
+    setData(newValue);
+    await setDoc(doc(db, "kclit", key), { value: newValue });
+  };
+
+  return [data, save, loading];
+}
+
+// ── Pages ───────────────────────────────────────────────
 
 function DailyVersePage() {
-  const [verse, setVerse] = useState("");
-  const [reference, setReference] = useState("");
+  const [data, save, loading] = useFirestoreData("daily-verse", { verse: "", reference: "" });
+
+  if (loading) return <div className="page"><p className="empty-text">Loading...</p></div>;
+
   return (
     <div className="page">
       <div className="title">Daily Verse</div>
@@ -37,21 +70,21 @@ function DailyVersePage() {
         <div className="section-title">📖 This Week's Verse</div>
         <input
           placeholder="Reference (e.g. John 3:16)"
-          value={reference}
-          onChange={(e) => setReference(e.target.value)}
+          value={data.reference}
+          onChange={(e) => save({ ...data, reference: e.target.value })}
           style={{ marginBottom: 10, width: "100%" }}
         />
         <textarea
           className="sidebar-textarea"
           placeholder="Enter the verse here..."
-          value={verse}
-          onChange={(e) => setVerse(e.target.value)}
+          value={data.verse}
+          onChange={(e) => save({ ...data, verse: e.target.value })}
           style={{ minHeight: 120, width: "100%" }}
         />
-        {reference && verse && (
+        {data.reference && data.verse && (
           <div className="verse-display">
-            <p className="verse-text">"{verse}"</p>
-            <p className="verse-ref">— {reference}</p>
+            <p className="verse-text">"{data.verse}"</p>
+            <p className="verse-ref">— {data.reference}</p>
           </div>
         )}
       </div>
@@ -60,12 +93,14 @@ function DailyVersePage() {
 }
 
 function AnnouncementsPage() {
-  const [items, setItems] = useState([]);
+  const [items, save, loading] = useFirestoreData("announcements", []);
   const [newItem, setNewItem] = useState("");
+
+  if (loading) return <div className="page"><p className="empty-text">Loading...</p></div>;
 
   const add = () => {
     if (!newItem.trim()) return;
-    setItems([{ id: Date.now(), text: newItem }, ...items]);
+    save([{ id: Date.now(), text: newItem }, ...items]);
     setNewItem("");
   };
 
@@ -87,7 +122,7 @@ function AnnouncementsPage() {
         {items.map((item) => (
           <div key={item.id} className="food-item">
             <div className="food-name">{item.text}</div>
-            <button className="btn-delete" onClick={() => setItems(items.filter(i => i.id !== item.id))}>Delete</button>
+            <button className="btn-delete" onClick={() => save(items.filter(i => i.id !== item.id))}>Delete</button>
           </div>
         ))}
       </div>
@@ -96,29 +131,30 @@ function AnnouncementsPage() {
 }
 
 function KCOutingPage() {
-  const [details, setDetails] = useState("");
-  const [date, setDate] = useState("");
-  const [location, setLocation] = useState("");
+  const [data, save, loading] = useFirestoreData("kc-outing", { date: "", location: "", details: "" });
+
+  if (loading) return <div className="page"><p className="empty-text">Loading...</p></div>;
+
   return (
     <div className="page">
       <div className="title">KC Outing</div>
       <div className="card">
         <div className="section-title">🏕️ Next Outing</div>
         <div className="row" style={{ marginBottom: 10 }}>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-          <input placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} />
+          <input type="date" value={data.date} onChange={(e) => save({ ...data, date: e.target.value })} />
+          <input placeholder="Location" value={data.location} onChange={(e) => save({ ...data, location: e.target.value })} />
         </div>
         <textarea
           className="sidebar-textarea"
           placeholder="Outing details, what to bring, etc..."
-          value={details}
-          onChange={(e) => setDetails(e.target.value)}
+          value={data.details}
+          onChange={(e) => save({ ...data, details: e.target.value })}
           style={{ minHeight: 120, width: "100%" }}
         />
-        {(date || location) && (
+        {(data.date || data.location) && (
           <div className="verse-display">
-            {date && <p className="verse-ref">📅 {new Date(date + "T00:00:00").toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" })}</p>}
-            {location && <p className="verse-ref">📍 {location}</p>}
+            {data.date && <p className="verse-ref">📅 {new Date(data.date + "T00:00:00").toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" })}</p>}
+            {data.location && <p className="verse-ref">📍 {data.location}</p>}
           </div>
         )}
       </div>
@@ -127,7 +163,10 @@ function KCOutingPage() {
 }
 
 function NotesPage() {
-  const [notes, setNotes] = useState("");
+  const [notes, save, loading] = useFirestoreData("notes", "");
+
+  if (loading) return <div className="page"><p className="empty-text">Loading...</p></div>;
+
   return (
     <div className="page">
       <div className="title">Notes</div>
@@ -137,7 +176,7 @@ function NotesPage() {
           className="sidebar-textarea"
           placeholder="Write your notes here..."
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          onChange={(e) => save(e.target.value)}
           style={{ minHeight: 300, width: "100%" }}
         />
       </div>
@@ -146,58 +185,55 @@ function NotesPage() {
 }
 
 function FridayNightsPage() {
-  const [events, setEvents] = useState(initialEvents);
-  const [selectedEventId, setSelectedEventId] = useState(1);
+  const [events, saveEvents, loading] = useFirestoreData("events", initialEvents);
+  const [selectedEventId, setSelectedEventId] = useState(null);
   const [newFood, setNewFood] = useState("");
   const [newPerson, setNewPerson] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newSharingPerson, setNewSharingPerson] = useState("");
 
+  useEffect(() => {
+    if (events && events.length > 0 && selectedEventId === null) {
+      setSelectedEventId(events[0].id);
+    }
+  }, [events]);
+
   const selectedEvent = useMemo(
-    () => events.find((e) => e.id === selectedEventId),
+    () => events?.find((e) => e.id === selectedEventId),
     [events, selectedEventId]
   );
 
+  if (loading) return <div className="page"><p className="empty-text">Loading...</p></div>;
+
   const addFood = () => {
     if (!newFood || !newPerson) return;
-    setEvents((prev) =>
-      prev.map((e) =>
-        e.id === selectedEventId
-          ? { ...e, food: [...e.food, { item: newFood, person: newPerson }] }
-          : e
-      )
-    );
+    saveEvents(events.map((e) =>
+      e.id === selectedEventId
+        ? { ...e, food: [...e.food, { item: newFood, person: newPerson }] }
+        : e
+    ));
     setNewFood("");
     setNewPerson("");
   };
 
   const deleteFood = (indexToDelete) => {
-    setEvents((prev) =>
-      prev.map((e) =>
-        e.id === selectedEventId
-          ? { ...e, food: e.food.filter((_, index) => index !== indexToDelete) }
-          : e
-      )
-    );
+    saveEvents(events.map((e) =>
+      e.id === selectedEventId
+        ? { ...e, food: e.food.filter((_, i) => i !== indexToDelete) }
+        : e
+    ));
   };
 
   const clearSharing = () => {
-    setEvents((prev) =>
-      prev.map((e) =>
-        e.id === selectedEventId ? { ...e, sharingPerson: "Not Selected Yet" } : e
-      )
-    );
+    saveEvents(events.map((e) =>
+      e.id === selectedEventId ? { ...e, sharingPerson: "Not Selected Yet" } : e
+    ));
   };
 
   const addEvent = () => {
     if (!newDate || !newSharingPerson) return;
-    const newEvent = {
-      id: Date.now(),
-      date: newDate,
-      food: [],
-      sharingPerson: newSharingPerson,
-    };
-    setEvents([...events, newEvent]);
+    const newEvent = { id: Date.now(), date: newDate, food: [], sharingPerson: newSharingPerson };
+    saveEvents([...events, newEvent]);
     setSelectedEventId(newEvent.id);
     setNewDate("");
     setNewSharingPerson("");
@@ -262,26 +298,23 @@ function FridayNightsPage() {
   );
 }
 
-// ── Nav config ─────────────────────────────────────────
+// ── Nav config ──────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { id: "home",          label: "Home",          emoji: "🏠" },
-  { id: "announcements", label: "Announcements",  emoji: "📣" },
-  { id: "daily-verse",   label: "Daily Verse",    emoji: "📖" },
-  { id: "kc-outing",    label: "KC Outing",      emoji: "🏕️" },
-  { id: "notes",         label: "Notes",          emoji: "📝" },
+  { id: "home",          label: "Home",         emoji: "🏠" },
+  { id: "announcements", label: "Announcements", emoji: "📣" },
+  { id: "daily-verse",   label: "Daily Verse",   emoji: "📖" },
+  { id: "kc-outing",    label: "KC Outing",     emoji: "🏕️" },
+  { id: "notes",         label: "Notes",         emoji: "📝" },
 ];
 
-// ── Root App ───────────────────────────────────────────
+// ── Root App ────────────────────────────────────────────
 
 export default function App() {
   const [activePage, setActivePage] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const navigate = (id) => {
-    setActivePage(id);
-    setMenuOpen(false);
-  };
+  const navigate = (id) => { setActivePage(id); setMenuOpen(false); };
 
   const renderPage = () => {
     switch (activePage) {
@@ -296,7 +329,6 @@ export default function App() {
 
   return (
     <div className="layout">
-      {/* Mobile topbar */}
       <div className="mobile-topbar">
         <div className="mobile-brand">
           <img src={logo} alt="KC Lit logo" className="sidebar-logo" />
@@ -307,7 +339,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* Mobile overlay */}
       {menuOpen && <div className="overlay" onClick={() => setMenuOpen(false)} />}
 
       <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
@@ -329,9 +360,7 @@ export default function App() {
         </nav>
       </aside>
 
-      <main className="main-content">
-        {renderPage()}
-      </main>
+      <main className="main-content">{renderPage()}</main>
     </div>
   );
 }

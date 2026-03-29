@@ -276,6 +276,12 @@ const NAV_ITEMS = [
 
 export default function App() {
   const [activePage, setActivePage] = useState("home");
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const navigate = (id) => {
+    setActivePage(id);
+    setMenuOpen(false);
+  };
 
   const renderPage = () => {
     switch (activePage) {
@@ -290,14 +296,31 @@ export default function App() {
 
   return (
     <div className="layout">
-      <aside className="sidebar">
-        <div className="sidebar-brand"><img src={logo} alt="KC Lit logo" className="sidebar-logo" />KC Lit</div>
+      {/* Mobile topbar */}
+      <div className="mobile-topbar">
+        <div className="mobile-brand">
+          <img src={logo} alt="KC Lit logo" className="sidebar-logo" />
+          KC Lit
+        </div>
+        <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
+          {menuOpen ? "✕" : "☰"}
+        </button>
+      </div>
+
+      {/* Mobile overlay */}
+      {menuOpen && <div className="overlay" onClick={() => setMenuOpen(false)} />}
+
+      <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
+        <div className="sidebar-brand">
+          <img src={logo} alt="KC Lit logo" className="sidebar-logo" />
+          KC Lit
+        </div>
         <nav className="sidebar-nav">
           {NAV_ITEMS.map((item) => (
             <button
               key={item.id}
               className={`nav-item ${activePage === item.id ? "active" : ""}`}
-              onClick={() => setActivePage(item.id)}
+              onClick={() => navigate(item.id)}
             >
               <span className="nav-emoji">{item.emoji}</span>
               {item.label}
@@ -305,6 +328,7 @@ export default function App() {
           ))}
         </nav>
       </aside>
+
       <main className="main-content">
         {renderPage()}
       </main>

@@ -381,3 +381,106 @@ input:focus {
   mix-blend-mode: luminosity;
   filter: brightness(1.8) contrast(1.2);
 }
+
+/* ── Mobile topbar (hidden on desktop) ── */
+.mobile-topbar {
+  display: none;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  /* Show topbar on mobile */
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #c1440e;
+    padding: 14px 18px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid #ffffff33;
+  }
+
+  .mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .hamburger {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+  }
+
+  /* Sidebar slides in from left */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -240px;
+    width: 240px;
+    height: 100vh;
+    z-index: 200;
+    transition: left 0.25s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  /* Hide desktop sidebar brand on mobile (topbar shows it) */
+  .sidebar .sidebar-brand {
+    display: flex;
+  }
+
+  /* Dark overlay behind open sidebar */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 150;
+  }
+
+  .main-content {
+    width: 100%;
+  }
+
+  /* Fix card widths on mobile */
+  .card {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+
+  .page {
+    padding: 24px 12px 40px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  /* Stack input rows on mobile */
+  .row,
+  .add-food-row {
+    flex-wrap: wrap;
+  }
+
+  .row input,
+  .add-food-row input {
+    min-width: 0;
+    flex: 1 1 120px;
+  }
+}

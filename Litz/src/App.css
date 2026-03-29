@@ -1,0 +1,383 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #f5f5f5;
+  color: #1a1a1a;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+/* ── Layout ── */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #f5f5f5;
+}
+
+/* ── Sidebar Nav ── */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: #c1440e;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-brand {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  padding: 28px 20px 24px;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #ffffff33;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 10px;
+  gap: 2px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #ffe0cc;
+  font-size: 15px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.nav-item:hover {
+  background: #ffffff22;
+  color: #ffffff;
+}
+
+.nav-item.active {
+  background: #ffffff;
+  color: #c1440e;
+  font-weight: 600;
+}
+
+.nav-emoji {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+/* ── Page ── */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px 60px;
+}
+
+.title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 24px;
+  letter-spacing: 0.5px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+/* ── Cards ── */
+.card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 24px 28px;
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid #e5e5e5;
+}
+
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #c1440e;
+  margin-bottom: 14px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.event-row {
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  background: #f9f9f9;
+  border: 1px solid #e5e5e5;
+  color: #333;
+  font-size: 15px;
+  transition: all 0.15s;
+}
+
+.event-row:hover {
+  border-color: #c1440e;
+  color: #c1440e;
+}
+
+.event-row.selected {
+  background: #fff3ee;
+  border-color: #c1440e;
+  color: #c1440e;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+input[type="text"],
+input[type="date"],
+input[placeholder] {
+  flex: 1;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: #1a1a1a;
+  font-size: 14px;
+  outline: none;
+}
+
+input::placeholder {
+  color: #aaa;
+}
+
+input:focus {
+  border-color: #c1440e;
+  background: #fff;
+}
+
+.btn-primary {
+  background: #c1440e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 18px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btn-primary:hover {
+  background: #a33a0c;
+}
+
+.btn-danger {
+  background: #fff3ee;
+  color: #c1440e;
+  border: 1px solid #c1440e;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-danger:hover {
+  background: #ffe0cc;
+}
+
+.btn-delete {
+  background: transparent;
+  color: #c1440e;
+  border: 1px solid #c1440e;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.btn-delete:hover {
+  background: #fff3ee;
+}
+
+.selected-heading {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.sharing-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 4px;
+  font-size: 15px;
+  color: #555;
+}
+
+.sharing-row strong {
+  color: #1a1a1a;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 16px 0;
+}
+
+.food-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  border: 1px solid #eee;
+}
+
+.food-name {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.food-person {
+  color: #c1440e;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.empty-text {
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+  margin: 8px 0 16px;
+}
+
+.add-food-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+/* ── Sidebar textarea ── */
+.sidebar-section {
+  margin-bottom: 16px;
+}
+
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffd4b0;
+  margin-bottom: 6px;
+}
+
+.sidebar-textarea {
+  width: 100%;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #1a1a1a;
+  font-size: 13px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  resize: vertical;
+  min-height: 70px;
+  outline: none;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+
+.sidebar-textarea::placeholder {
+  color: #aaa;
+}
+
+.sidebar-textarea:focus {
+  border-color: #c1440e;
+}
+
+/* ── Verse display ── */
+.verse-display {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #fff3ee;
+  border-left: 3px solid #c1440e;
+  border-radius: 0 8px 8px 0;
+}
+
+.verse-text {
+  color: #1a1a1a;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 8px !important;
+}
+
+.verse-ref {
+  color: #c1440e;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ── Sidebar logo ── */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+/* ── Sidebar logo ── */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+  mix-blend-mode: luminosity;
+  filter: brightness(1.8) contrast(1.2);
+}

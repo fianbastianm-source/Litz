@@ -1,48 +1,43 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import logo from "./assets/lit.jpeg";
-import {db} from "./firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "./firebase";
+import { doc, setDoc, onSnapshot } from "firebase/firestore";
 
 const initialEvents = [];
 
+// ── Real-time Firestore hook ─────────────────────────────
 function useFirestoreData(docId, defaultValue) {
-  const [data, setData] = useState(defaultValue);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const ref = doc(db, "appData", docId);
-        const snap = await getDoc(ref);
-
-        if (snap.exists()) {
-          setData(snap.data().value);
-        } else {
-          await setDoc(ref, { value: defaultValue });
-          setData(defaultValue);
-        }
-      } catch (error) {
-        console.error("Error loading Firestore data:", error);
-      } finally {
-        setLoading(false);
+    const ref = doc(db, "appData", docId);
+    const unsub = onSnapshot(ref, async (snap) => {
+      if (snap.exists()) {
+        setData(snap.data().value);
+      } else {
+        await setDoc(ref, { value: defaultValue });
+        setData(defaultValue);
       }
-    }
-
-    loadData();
+      setLoading(false);
+    }, (error) => {
+      console.error("Firestore error:", error);
+      setLoading(false);
+    });
+    return () => unsub();
   }, [docId]);
 
   const save = async (newValue) => {
     try {
       setData(newValue);
-      const ref = doc(db, "appData", docId);
-      await setDoc(ref, { value: newValue });
+      await setDoc(doc(db, "appData", docId), { value: newValue });
     } catch (error) {
-      console.error("Error saving Firestore data:", error);
+      console.error("Error saving:", error);
     }
   };
 
-  return [data, save, loading];
+  return [data ?? defaultValue, save, loading];
 }
 
 function formatDate(dateString) {
@@ -59,9 +54,7 @@ function formatDateShort(dateString) {
 
 function DailyVersePage() {
   const [data, save, loading] = useFirestoreData("daily-verse", { verse: "", reference: "" });
-
   if (loading) return <div className="page"><p className="empty-text">Loading...</p></div>;
-
   return (
     <div className="page">
       <div className="title">Daily Verse</div>
@@ -94,15 +87,12 @@ function DailyVersePage() {
 function AnnouncementsPage() {
   const [items, save, loading] = useFirestoreData("announcements", []);
   const [newItem, setNewItem] = useState("");
-
   if (loading) return <div className="page"><p className="empty-text">Loading...</p></div>;
-
   const add = () => {
     if (!newItem.trim()) return;
     save([{ id: Date.now(), text: newItem }, ...items]);
     setNewItem("");
   };
-
   return (
     <div className="page">
       <div className="title">Announcements</div>
@@ -131,9 +121,7 @@ function AnnouncementsPage() {
 
 function KCOutingPage() {
   const [data, save, loading] = useFirestoreData("kc-outing", { date: "", location: "", details: "" });
-
   if (loading) return <div className="page"><p className="empty-text">Loading...</p></div>;
-
   return (
     <div className="page">
       <div className="title">KC Outing</div>
@@ -163,9 +151,7 @@ function KCOutingPage() {
 
 function NotesPage() {
   const [notes, save, loading] = useFirestoreData("notes", "");
-
   if (loading) return <div className="page"><p className="empty-text">Loading...</p></div>;
-
   return (
     <div className="page">
       <div className="title">Notes</div>
@@ -238,19 +224,33 @@ function FridayNightsPage() {
     setNewSharingPerson("");
   };
 
+  const deleteEvent = (eventId) => {
+    const updated = events.filter((e) => e.id !== eventId);
+    saveEvents(updated);
+    if (selectedEventId === eventId) {
+      setSelectedEventId(updated.length > 0 ? updated[0].id : null);
+    }
+  };
+
   return (
     <div className="page">
       <div className="title">KC Lit</div>
 
       <div className="card">
         <div className="section-title">Friday Nights</div>
+        {events.length === 0 && <p className="empty-text">No nights planned yet.</p>}
         {events.map((e) => (
           <div
             key={e.id}
             className={`event-row ${e.id === selectedEventId ? "selected" : ""}`}
             onClick={() => setSelectedEventId(e.id)}
           >
-            {formatDate(e.date)} — Sharing: {e.sharingPerson || "Not Selected Yet"}
+            <span>{formatDate(e.date)} — Sharing: {e.sharingPerson || "Not Selected Yet"}</span>
+            <button
+              className="btn-delete"
+              style={{ marginLeft: "auto", flexShrink: 0 }}
+              onClick={(ev) => { ev.stopPropagation(); deleteEvent(e.id); }}
+            >Delete</button>
           </div>
         ))}
       </div>
